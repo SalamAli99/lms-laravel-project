@@ -14,6 +14,9 @@ class AuthService
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'phone'=>$data['phone'],
+            'address'=>$data['address'],
+            'age'=>$data['age'],
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
