@@ -10,6 +10,7 @@ use App\Traits\ApiResponse;
 
 class AuthService
 {
+    use ApiResponse; 
 
      public function register(array $data)
     {
@@ -38,9 +39,11 @@ class AuthService
         $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials'],
-            ]);
+           throw $this->error(
+    'Login error',
+    null,
+    401
+);
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
@@ -53,6 +56,7 @@ class AuthService
 
      public function logout(User $user)
     {
+        
         $user->currentAccessToken()->delete();
         
         return $this->success(
