@@ -3,30 +3,33 @@
 namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use App\Http\Resources\Auth\LoginResource;
+use App\Http\Resources\Auth\RegisterResource;
+use App\Traits\ApiResponse;
+
 
 class AuthService
 {
 
      public function register(array $data)
     {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
+       $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
             'password' => Hash::make($data['password']),
-            'phone'=>$data['phone'],
-            'address'=>$data['address'],
-            'age'=>$data['age'],
+            'phone'    => $data['phone'] ?? null,
+            'address'  => $data['address'] ?? null,
+            'age'      => $data['age'] ?? null,
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json([
-            'status' => true,
-            'message' => 'User registered successfully',
-            'token' => $token,
-            'user' => $user,
-        ], 201);
+       
+        return $this->success(
+            new RegisterResource($user, $token),
+            'Registered successfully',
+            201
+        );
     }
 
 
@@ -42,22 +45,20 @@ class AuthService
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user,
-        ]);
+        return $this->success(
+            new LoginResource($user, $token),
+            'Login successful'
+        );
     }
 
      public function logout(User $user)
     {
         $user->currentAccessToken()->delete();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Logged out successfully',
-        ]);
+        
+        return $this->success(
+            null,
+            'Logged out successfully'
+        );
     
 }
 }
