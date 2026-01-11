@@ -3,14 +3,11 @@
 namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use App\Http\Resources\Auth\LoginResource;
-use App\Http\Resources\Auth\RegisterResource;
-use App\Traits\ApiResponse;
-
+use Illuminate\Http\Request;
 
 class AuthService
 {
-    use ApiResponse; 
+    
 
      public function register(array $data)
     {
@@ -26,11 +23,9 @@ class AuthService
         $token = $user->createToken('api-token')->plainTextToken;
 
        
-        return $this->success(
-            new RegisterResource($user, $token),
-            'Registered successfully',
-            201
-        );
+        return [
+            $user,$token
+        ];
     }
 
 
@@ -39,30 +34,20 @@ class AuthService
         $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
-           throw $this->error(
-    'Login error',
-    null,
-    401
-);
+           throw "error";
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return $this->success(
-            new LoginResource($user, $token),
-            'Login successful'
-        );
+        return [$user,$token];
     }
 
-     public function logout(User $user)
+     public function logout(Request $request)
     {
         
-        $user->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()->delete();
         
-        return $this->success(
-            null,
-            'Logged out successfully'
-        );
+        return "ok";
     
 }
 }
