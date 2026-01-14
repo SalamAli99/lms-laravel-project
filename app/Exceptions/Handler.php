@@ -15,4 +15,25 @@ class Handler extends ExceptionHandler
             'message' => 'Unauthenticated',
         ], 401);
     }
+
+    public function render($request, Throwable $e)
+    {
+        // Spatie role / permission denied
+        if ($e instanceof UnauthorizedException) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Access denied. Insufficient permissions.',
+            ], 403);
+        }
+
+        // Laravel policy / gate denied
+        if ($e instanceof AuthorizationException) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Access denied.',
+            ], 403);
+        }
+
+        return parent::render($request, $e);
+    }
 }
