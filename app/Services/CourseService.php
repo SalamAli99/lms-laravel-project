@@ -35,20 +35,75 @@ class CourseService
 
 
 /////////////////////////////////////////////////
-    public function create(array $data): Course
-    {
-        $data['user_id'] = Auth::id();
-        return Course::create($data);
+public function create(array $data): Course
+{
+    $images = $data['images'] ?? null;
+    $files  = $data['files'] ?? null;
+
+    unset($data['images'], $data['files']);
+
+    $data['user_id'] = auth()->id();
+    $course = Course::create($data);
+
+   
+    if (!empty($images)) {
+        foreach ($images as $image) {
+            $course
+                ->addMedia($image)
+                ->toMediaCollection('images');
+        }
     }
 
-    public function update(Course $course, array $data): Course
-    {
-        $course->update($data);
-        return $course->fresh();
+    
+    if (!empty($files)) {
+        foreach ($files as $file) {
+            $course
+                ->addMedia($file)
+                ->toMediaCollection('files');
+        }
     }
 
-    public function delete(Course $course): void
-    {
-        $course->delete();
+    return $course->fresh();
+}
+
+
+
+   public function update(Course $course, array $data): Course
+{
+    $images = $data['images'] ?? null;
+    $files  = $data['files'] ?? null; // <- add this line
+
+    unset($data['images'], $data['files']); // remove both from $data before update
+
+    // Update the other course fields
+    $course->update($data);
+
+    // Handle images (if any)
+    if ($images) {
+        foreach ($images as $image) {
+            $course->addMedia($image)->toMediaCollection('images');
+        }
     }
+
+    // Handle files (if any)
+    if ($files) {
+        foreach ($files as $file) {
+            $course->addMedia($file)->toMediaCollection('files');
+        }
+    }
+
+    return $course->fresh();
+}
+
+
+    public function delete(Course $course, $user): void
+{
+    if ($user->hasRole('admin')) {
+        $course->clearMediaCollection('images');
+        $course->clearMediaCollection('files');
+    }
+
+    $course->delete();
+}
+
 }

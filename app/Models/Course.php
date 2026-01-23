@@ -3,9 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
-class Course extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+class Course extends Model implements HasMedia
 {
+        use InteractsWithMedia;
+
+        public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('images');
+        $this->addMediaCollection('files'); 
+    }
     protected $fillable = [
         'title',
         'description',
@@ -16,5 +24,6 @@ class Course extends Model
     public function instructor()
     {
         return $this->belongsTo(User::class, 'user_id');
+        
     }
 }

@@ -86,17 +86,30 @@ public function index(CourseFilterRequest $request)
     }
 
     public function destroy(Course $course)
-    {
-        try {
-            $this->service->delete($course);
+{
+    try {
+        $user = auth()->user(); 
 
-            return $this->success(
-                null,
-                'Course deleted successfully'
-            );
-        } catch (Exception $e) {
-            return $this->error('Failed to delete course', $e->getMessage(), 500);
-        }
+        $this->service->delete($course, $user);
+
+        return $this->success(
+            null,
+            'Course deleted successfully'
+        );
+    } catch (\Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeDeleted $e) {
+        return $this->error(
+            'Failed to delete course media',
+            $e->getMessage(),
+            500
+        );
+    } catch (\Exception $e) {
+        return $this->error(
+            'Failed to delete course',
+            $e->getMessage(),
+            500
+        );
     }
+}
+
 }
 
