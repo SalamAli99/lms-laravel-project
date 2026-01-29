@@ -26,4 +26,17 @@ class Course extends Model implements HasMedia
         return $this->belongsTo(User::class, 'user_id');
         
     }
+
+    public function lessons()
+    {
+        return $this->hasMany(Lesson::class);
+    }
+    
+    public function students()
+{
+    return $this->belongsToMany(User::class, 'course_user')
+        ->withTimestamps();
+}
+
+
 }

@@ -7,7 +7,7 @@ class StoreCourseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()->hasAnyRole(['admin', 'instructor']);
+        return auth()->user()->hasAnyRole(['admin']);
     }
 
     public function rules(): array
@@ -15,19 +15,12 @@ class StoreCourseRequest extends FormRequest
         $rules =[
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            
-        ];
-// Only admins can manage files/images
-        if ($this->user()->hasRole('admin')) {
-            $rules = array_merge($rules, [
-                'images'   => ['nullable', 'array', 'max:5'],
+            'images'   => ['nullable', 'array', 'max:5'],
                 'images.*' => ['image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
 
                 'files'    => ['nullable', 'array', 'max:3'],
                 'files.*'  => ['file', 'mimes:pdf', 'max:10240'],
-            ]);
-        }
-
+        ];
         return $rules;
     }
     public function messages(): array

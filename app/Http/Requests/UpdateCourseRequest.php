@@ -9,28 +9,20 @@ class UpdateCourseRequest extends FormRequest
     public function authorize(): bool
     {
         // Admin or Instructor can update, but rules differ
-        return $this->user()->hasAnyRole(['admin', 'instructor']);
+        return $this->user()->hasAnyRole(['admin']);
     }
 
-    public function rules(): array
+     public function rules(): array
     {
-        $rules = [
-            'title'       => ['sometimes', 'string', 'max:255'],
-            'price'       => ['sometimes', 'numeric', 'min:0'],
-            'description' => ['sometimes', 'string'],
-        ];
-
-        // Only admins can manage files/images
-        if ($this->user()->hasRole('admin')) {
-            $rules = array_merge($rules, [
-                'images'   => ['nullable', 'array', 'max:5'],
+        $rules =[
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'images'   => ['nullable', 'array', 'max:5'],
                 'images.*' => ['image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
 
                 'files'    => ['nullable', 'array', 'max:3'],
                 'files.*'  => ['file', 'mimes:pdf', 'max:10240'],
-            ]);
-        }
-
+        ];
         return $rules;
     }
 

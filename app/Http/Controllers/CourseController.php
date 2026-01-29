@@ -57,6 +57,7 @@ public function index(CourseFilterRequest $request)
     public function show(Course $course)
 {
     try {
+
         return $this->success(
             new CourseResource($course),
             'Course fetched successfully'

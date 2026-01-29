@@ -10,7 +10,7 @@ class CourseService
 
     public function list(array $filters = [])
     {
-        $query = Course::query()->with('instructor');
+        $query = Course::query()->with('instructor','lessons');
 
         if (! empty($filters['search'])) {
             $query->where('title', 'like', '%' . $filters['search'] . '%');
@@ -46,22 +46,25 @@ public function create(array $data): Course
     $course = Course::create($data);
 
    
-    if (!empty($images)) {
-        foreach ($images as $image) {
-            $course
-                ->addMedia($image)
-                ->toMediaCollection('images');
-        }
-    }
+    $images = is_array($images) ? $images : [$images];
 
-    
-    if (!empty($files)) {
-        foreach ($files as $file) {
-            $course
-                ->addMedia($file)
-                ->toMediaCollection('files');
-        }
+if (!empty($images)) {
+    foreach ($images as $image) {
+        $course
+            ->addMedia($image)
+            ->usingName($image->getClientOriginalName()) // Preserve original name
+            ->toMediaCollection('images', 'public');
     }
+}
+
+if (!empty($files)) {
+    foreach ($files as $file) {
+        $course
+            ->addMedia($file)
+            ->usingName($file->getClientOriginalName()) // Preserve original name
+            ->toMediaCollection('files', 'public');
+    }
+}
 
     return $course->fresh();
 }
@@ -98,12 +101,38 @@ public function create(array $data): Course
 
     public function delete(Course $course, $user): void
 {
-    if ($user->hasRole('admin')) {
+    
         $course->clearMediaCollection('images');
         $course->clearMediaCollection('files');
-    }
+   
 
     $course->delete();
 }
 
+    public function show(Course $course, User $user): Course
+    {
+        // Student → only published courses
+        if ($user->hasRole('student') && ! $course->is_published) {
+            throw new Exception('Course is not published');
+        }
+
+        // Instructor → only own courses
+        if (
+            $user->hasRole('instructor') &&
+            $course->user_id !== $user->id
+        ) {
+            throw new Exception('You do not own this course');
+        }
+
+        // Load relations needed by CourseResource
+        return $course->load([
+            'instructor',
+            'lesson' => function ($query) use ($user) {
+                // Students see only published lessons
+                if ($user->hasRole('student')) {
+                    $query->where('is_published', true);
+                }
+            },
+        ]);
+    }
 }
