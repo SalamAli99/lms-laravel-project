@@ -37,6 +37,9 @@ class Course extends Model implements HasMedia
     return $this->belongsToMany(User::class, 'course_user')
         ->withTimestamps();
 }
-
+    public function reviews()
+{
+    return $this->belongsToMany(Review::class);
+}
 
 }

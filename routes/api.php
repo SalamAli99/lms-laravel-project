@@ -7,19 +7,39 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Admin\CourseInstructorController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\LatestNewsController;
 
 Route::get('/courses', [CourseController::class, 'index']);
 Route::get('/courses/{course}', [CourseController::class, 'show']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+
+    Route::get('courses/{course}/reviews', [ReviewController::class, 'index']);
+    Route::post('reviews', [ReviewController::class, 'store']);
+    Route::put('reviews/{review}', [ReviewController::class, 'update']);
+    Route::delete('reviews/{review}', [ReviewController::class, 'destroy']);
+    
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::post('/logout', [AuthController::class, 'logout']);
+
     Route::get('/lessons', [LessonController::class, 'index']);
     Route::get('/lessons/{lesson}', [LessonController::class, 'show']);
+    
+
 });
 
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    
+    Route::get('/latest', [LatestNewsController::class, 'index']);
+    Route::post('/latest', [LatestNewsController::class, 'store']);
+    Route::get('latest/{id}', [LatestNewsController::class, 'show']);
+    Route::put('latest/{id}', [LatestNewsController::class, 'update']);
+    Route::delete('latest/{id}', [LatestNewsController::class, 'destroy']);
+
     Route::post('/users/{user}/roles', [UserRoleController::class, 'assign']);
     Route::put('/users/{user}/roles', [UserRoleController::class, 'update']);
     Route::delete('/users/{user}/roles', [UserRoleController::class, 'revoke']);
