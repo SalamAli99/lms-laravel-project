@@ -12,7 +12,7 @@ class ReviewRequest extends FormRequest
         return [
             'user_id'        => 'integer|required',
             'course_id'        => 'integer|required',
-            'sort_order'       => 'integer|required'
+            'comment'       => 'string|required'
         ];
     }
 }

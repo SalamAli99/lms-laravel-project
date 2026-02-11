@@ -7,6 +7,8 @@ use App\Models\Review;
 use App\Services\ReviewService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\ReviewRequest;
+use App\Http\Resources\ReviewResource;
 
 class ReviewController extends Controller
 {
@@ -19,27 +21,36 @@ class ReviewController extends Controller
         $this->reviewService = $reviewService;
     }
 
-    public function index($courseId)
+    public function index()
     {
-        $reviews = Review::with('user')
-            ->where('course_id', $courseId)
-            ->orderBy('sort_order')
-            ->get();
-
-        return $this->success($reviews, 'Reviews fetched successfully');
+       try {
+            return $this->success(
+                ReviewResource::collection($this->reviewService->list()),
+                'Reviews fetched successfully'
+            );
+        } catch (Exception $e) {
+            return $this->error('Failed to fetch Reviews', $e->getMessage(), 500);
+        }
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'user_id'    => 'required|exists:users,id',
-            'course_id'  => 'required|exists:courses,id',
-            'sort_order' => 'nullable|integer',
-        ]);
+    public function store(ReviewRequest $request)
+    {  try {
+        $review = $this->reviewService->store(
+            $request->validated()
+        );
 
-        $review = $this->reviewService->create($data);
-
-        return $this->success($review, 'Review created successfully', 201);
+        return $this->success(
+            new ReviewResource($review),
+            'review created successfully',
+            201
+        );
+    } catch (\Exception $e) {
+        return $this->error(
+            'Failed to create review',
+            $e->getMessage(),
+            403
+        );
+    }
     }
 
     public function show(Review $review)
@@ -50,11 +61,9 @@ class ReviewController extends Controller
         );
     }
 
-    public function update(Request $request, Review $review)
+    public function update(ReviewRequest $request, Review $review)
     {
-        $data = $request->validate([
-            'sort_order' => 'required|integer',
-        ]);
+        $data = $request->validated();
 
         $review = $this->reviewService->update($review, $data);
 

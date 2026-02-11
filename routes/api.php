@@ -17,8 +17,10 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 
-    Route::get('courses/{course}/reviews', [ReviewController::class, 'index']);
+    Route::get('reviews', [ReviewController::class, 'index']);
     Route::post('reviews', [ReviewController::class, 'store']);
+    Route::get('reviews/{review}', [ReviewController::class, 'show']);
+
     Route::put('reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('reviews/{review}', [ReviewController::class, 'destroy']);
     
@@ -60,5 +62,21 @@ Route::middleware(['auth:sanctum','role:admin,instructor'])->group(function () {
     Route::put('/lessons/{lesson}', [LessonController::class, 'update']);
     Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy']);
 });
-Route::middleware(['auth:sanctum','role:student'])
-    ->post('/courses/{course}/enroll', [EnrollmentController::class, 'enroll']);
+Route::middleware(['auth:sanctum','role:student'])->group(function () {
+    Route::post('/courses/{course}/enroll', [EnrollmentController::class, 'enroll']);
+     Route::get('/enrollments', [EnrollmentController::class, 'index']);      
+    Route::post('/enrollments', [EnrollmentController::class, 'store']);     
+    Route::delete('/enrollments/{courseId}', [EnrollmentController::class, 'destroy']);
+
+    Route::get('/my-courses', [EnrollmentController::class, 'myCourses']);
+
+    Route::get(
+        '/courses/{course}/students',
+        [EnrollmentController::class, 'enrolledStudents']
+    );
+
+    Route::patch(
+        '/enrollments/{enrollment}/status',
+        [EnrollmentController::class, 'updateStatus']
+    );
+});

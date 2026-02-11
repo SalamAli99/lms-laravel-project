@@ -21,7 +21,7 @@ return new class extends Migration
                   ->constrained()
                   ->cascadeOnDelete();
 
-            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('comment');
             $table->timestamps();
             $table->unique(['user_id', 'course_id']);
         });
