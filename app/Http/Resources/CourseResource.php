@@ -11,23 +11,9 @@ class CourseResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'price' => $this->price,
-            'instructor' => [
-                'id' => $this->instructor->id,
-                'name' => $this->instructor->name,
-            ],
-            'lessons' => LessonResource::collection(
-                $this->whenLoaded('lessons')
-            ),
-            'images' => $this->getMedia('images')->map(fn ($media) => [
-                'id'  => $media->id,
-                'name' => $media->name,
-                'url' => $media->getUrl(),            ]),
-'files' => $this->getMedia('files')->map(fn ($media) => [
-    'id'   => $media->id,
-    'name' => $media->name,
-    'url' => $media->getUrl(),
-]),
+            'pricing_type' => $this->is_paid ? 'paid' : 'free',
+            'price' => $this->is_paid ? $this->price : 'Free',
+            'user_id'=>$this->user_id,
             'created_at' => $this->created_at,
             
         ];

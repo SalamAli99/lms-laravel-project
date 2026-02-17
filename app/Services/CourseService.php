@@ -9,130 +9,120 @@ class CourseService
     /////////////////////////////////
 
     public function list(array $filters = [])
-    {
-        $query = Course::query()->with('instructor','lessons');
+{
+    $query = Course::query()->with('instructor','lessons');
 
-        if (! empty($filters['search'])) {
-            $query->where('title', 'like', '%' . $filters['search'] . '%');
-        }
+    if (!empty($filters['search'])) {
+        $query->where('title', 'like', '%' . $filters['search'] . '%');
+    }
 
-        if (! empty($filters['min_price'])) {
+    // price filters must ignore free courses
+    if (isset($filters['min_price']) || isset($filters['max_price'])) {
+        $query->where('is_paid', true);
+
+        if (!empty($filters['min_price'])) {
             $query->where('price', '>=', $filters['min_price']);
         }
 
-        if (! empty($filters['max_price'])) {
+        if (!empty($filters['max_price'])) {
             $query->where('price', '<=', $filters['max_price']);
         }
-
-        if (! empty($filters['instructor_id'])) {
-            $query->where('user_id', $filters['instructor_id']);
-        }
-
-        $perPage = $filters['per_page'] ?? 10;
-
-        return $query->latest()->paginate($perPage);
     }
+
+    if (!empty($filters['instructor_id'])) {
+        $query->where('user_id', $filters['instructor_id']);
+    }
+
+    return $query->latest()->paginate($filters['per_page'] ?? 10);
+}
+
 
 
 /////////////////////////////////////////////////
 public function create(array $data): Course
+{
+    $images = $data['images'] ?? [];
+    $files  = $data['files'] ?? [];
+
+    unset($data['images'], $data['files']);
+
+    $data['user_id'] = Auth::id();
+
+    $course = Course::create($data);
+
+    foreach ((array)$images as $image) {
+        if ($image) {
+            $course->addMedia($image)
+                ->usingName($image->getClientOriginalName())
+                ->toMediaCollection('images', 'public');
+        }
+    }
+
+    foreach ((array)$files as $file) {
+        if ($file) {
+            $course->addMedia($file)
+                ->usingName($file->getClientOriginalName())
+                ->toMediaCollection('files', 'public');
+        }
+    }
+
+    return $course->load('instructor');
+}
+
+
+
+
+public function update(Course $course, array $data): Course
 {
     $images = $data['images'] ?? null;
     $files  = $data['files'] ?? null;
 
     unset($data['images'], $data['files']);
 
-    $data['user_id'] = auth()->id();
-    $course = Course::create($data);
-
-   
-    $images = is_array($images) ? $images : [$images];
-
-if (!empty($images)) {
-    foreach ($images as $image) {
-        $course
-            ->addMedia($image)
-            ->usingName($image->getClientOriginalName()) // Preserve original name
-            ->toMediaCollection('images', 'public');
-    }
-}
-
-if (!empty($files)) {
-    foreach ($files as $file) {
-        $course
-            ->addMedia($file)
-            ->usingName($file->getClientOriginalName()) // Preserve original name
-            ->toMediaCollection('files', 'public');
-    }
-}
-
-    return $course->fresh();
-}
-
-
-
-   public function update(Course $course, array $data): Course
-{
-    $images = $data['images'] ?? null;
-    $files  = $data['files'] ?? null; // <- add this line
-
-    unset($data['images'], $data['files']); // remove both from $data before update
-
-    // Update the other course fields
     $course->update($data);
 
-    // Handle images (if any)
-    if ($images) {
+    if ($images !== null) {
+        $course->clearMediaCollection('images');
+
         foreach ($images as $image) {
-            $course->addMedia($image)->toMediaCollection('images');
+            $course->addMedia($image)->toMediaCollection('images', 'public');
         }
     }
 
-    // Handle files (if any)
-    if ($files) {
+    if ($files !== null) {
+        $course->clearMediaCollection('files');
+
         foreach ($files as $file) {
-            $course->addMedia($file)->toMediaCollection('files');
+            $course->addMedia($file)->toMediaCollection('files', 'public');
         }
     }
 
-    return $course->fresh();
+    return $course->fresh()->load('instructor');
 }
 
-
-    public function delete(Course $course, $user): void
+public function delete(Course $course): void
 {
-    
-        $course->clearMediaCollection('images');
-        $course->clearMediaCollection('files');
-   
+    if ($course->user_id !== Auth::id()) {
+        throw new \Exception('Unauthorized');
+    }
 
+    $course->clearMediaCollection('images');
+    $course->clearMediaCollection('files');
     $course->delete();
 }
 
-    public function show(Course $course, User $user): Course
-    {
-        // Student → only published courses
-        if ($user->hasRole('student') && ! $course->is_published) {
-            throw new Exception('Course is not published');
-        }
 
-        // Instructor → only own courses
-        if (
-            $user->hasRole('instructor') &&
-            $course->user_id !== $user->id
-        ) {
-            throw new Exception('You do not own this course');
-        }
+    public function show(Course $course): Course
+{
+    return $course->load([
+        'instructor',
+        'lessons' => function ($query) {
+            if (!Auth::user()?->hasRole('instructor')) {
+                $query->where('is_published', true);
+            }
+        },
+        'students',
+    ]);
+}
 
-        // Load relations needed by CourseResource
-        return $course->load([
-            'instructor',
-            'lesson' => function ($query) use ($user) {
-                // Students see only published lessons
-                if ($user->hasRole('student')) {
-                    $query->where('is_published', true);
-                }
-            },
-        ]);
-    }
 }

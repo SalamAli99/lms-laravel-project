@@ -15,11 +15,9 @@ class StoreCourseRequest extends FormRequest
         $rules =[
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'images'   => ['nullable', 'array', 'max:5'],
-                'images.*' => ['image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
-
-                'files'    => ['nullable', 'array', 'max:3'],
-                'files.*'  => ['file', 'mimes:pdf', 'max:10240'],
+                'is_paid' => ['required','boolean'],
+                'price' => ['nullable','numeric','min:0','required_if:is_paid,1'],
+                'user_id'=>'required'
         ];
         return $rules;
     }

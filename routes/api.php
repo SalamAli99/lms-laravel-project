@@ -9,6 +9,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Admin\CourseInstructorController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\LatestNewsController;
+use App\Http\Controllers\Api\CouponController;
 
 Route::get('/courses', [CourseController::class, 'index']);
 Route::get('/courses/{course}', [CourseController::class, 'show']);
@@ -55,8 +56,15 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
         Route::post('/courses', [CourseController::class, 'store']);
         Route::put('/courses/{course}', [CourseController::class, 'update']);
         Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
-    });
+         /////
+    Route::post('/coupons', [CouponController::class, 'store']);
+    Route::get('/courses/{course}/coupons', [CouponController::class, 'index']);
+    Route::post('/courses/{course}/preview-price', [CouponController::class, 'preview']);
 
+
+    Route::post('/courses/{course}/apply-coupon', [CouponController::class, 'apply']);
+    });
+/////
 Route::middleware(['auth:sanctum','role:admin,instructor'])->group(function () {
     Route::post('/lessons', [LessonController::class, 'store']);
     Route::put('/lessons/{lesson}', [LessonController::class, 'update']);

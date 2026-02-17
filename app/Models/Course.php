@@ -18,8 +18,23 @@ class Course extends Model implements HasMedia
         'title',
         'description',
         'price',
+        'is_paid',
         'user_id',
     ];
+    protected static function booted()
+    {
+        // Auto handle price logic
+        static::saving(function ($course) {
+
+            if (!$course->is_paid) {
+                $course->price = null;
+            }
+
+            if ($course->is_paid && empty($course->price)) {
+                throw new \Exception('Paid course must have a price');
+            }
+        });
+    }
 
     public function instructor()
     {
@@ -44,5 +59,17 @@ public function students()
 {
     return $this->belongsToMany(Review::class);
 }
+ public function isFree(): bool
+    {
+        return !$this->is_paid;
+    }
 
+    public function isPaid(): bool
+    {
+        return $this->is_paid;
+    }
+    public function coupons()
+{
+    return $this->hasMany(Coupon::class);
+}
 }
